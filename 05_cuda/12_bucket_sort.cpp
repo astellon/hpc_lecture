@@ -12,7 +12,7 @@ int main() {
   }
   printf("\n");
 
-  std::vector<int> bucket(range); 
+  std::vector<int> bucket(range);
   for (int i=0; i<range; i++) {
     bucket[i] = 0;
   }
