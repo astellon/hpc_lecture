@@ -14,7 +14,7 @@ __global__ void bucket_sort(int* key) {
 }
 
 int main() {
-  int n = 500;
+  int n = 50;
   int range = 5;
 
   // allocation
