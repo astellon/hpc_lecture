@@ -116,15 +116,15 @@ launch_configuration dispatch(
     int             k,                              ///< Width in columns of op(A) and height in rows of op(B)
     float           alpha,
     float           beta,
-    float         *d_a,                           ///< Device pointer to matrix A array values
-    float         *d_b,                           ///< Device pointer to matrix B array values
-    float         *d_c,                           ///< Device pointer to matrix C array values
-    cudaStream_t    stream = 0,                     ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
-    bool            debug_synchronous = true)       ///< Whether or not to synchronize the stream after every kernel launch
+    float*          d_a,                            ///< Device pointer to matrix A array values
+    float*          d_b,                            ///< Device pointer to matrix B array values
+    float*          d_c,                            ///< Device pointer to matrix C array values
+    cudaStream_t    stream = 0                      ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+  )
                                                     ///  to check for errors.  Also causes launch configurations to be printed
                                                     ///  to the console if DEBUG is defined.  Default is \p false.
 {
-    // Thread block rasterization type
+  // Thread block rasterization type
   static const matrix_transform_t::kind_t TransformA = matrix_transform_t::NonTranspose;
   static const matrix_transform_t::kind_t TransformB = matrix_transform_t::NonTranspose;
   epilogue_op_t epilogue(alpha, beta);
