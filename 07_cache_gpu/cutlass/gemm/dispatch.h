@@ -154,7 +154,7 @@ launch_configuration dispatch(
                           config.block,
                           config.grid);
   config.split_k = k_split.split_k;
-  gemm::kernel<epilogue_op_t>
+  gemm::kernel
     <<< config.grid,
     config.block,
     dynamic_smem_bytes,
