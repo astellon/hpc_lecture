@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include <immintrin.h>
 
 #include <immintrin.h>
 
@@ -37,33 +38,33 @@ int main() {
     m[i] = drand48();
     fx[i] = fy[i] = 0;
   }
-  for(int i=0; i<N; i++) {
-    __m256 xi = _mm256_set1_ps(x[i]);
-    __m256 yi = _mm256_set1_ps(y[i]);
-
-    __m256 xj = _mm256_load_ps(x);
-    __m256 yj = _mm256_load_ps(y);
-    __m256 mj = _mm256_load_ps(m);
-
-    __m256 rxj = _mm256_sub_ps(xi, xj);
-    __m256 ryj = _mm256_sub_ps(yi, yj);
-
-    __m256 r = _mm256_rsqrt_ps(_mm256_add_ps(_mm256_mul_ps(rxj, rxj), _mm256_mul_ps(ryj, ryj)));
-
-    // replace INF with 0
-    __m256 mask = _mm256_cmp_ps(r, _mm256_set1_ps(INFINITY), 0);
-    r = _mm256_blendv_ps(r, _mm256_setzero_ps(), mask);
-
-    __m256 fxi = _mm256_mul_ps(_mm256_mul_ps(rxj, mj), _mm256_mul_ps(_mm256_mul_ps(r, r), r));
-    __m256 fyi = _mm256_mul_ps(_mm256_mul_ps(ryj, mj), _mm256_mul_ps(_mm256_mul_ps(r, r), r));
-
-    // sum
-    float fxi_sum = sum256(fxi);
-    float fyi_sum = sum256(fyi);
-
-    fx[i] -= fxi_sum;
-    fy[i] -= fyi_sum;
-
-    printf("%d %g %g\n",i,fx[i],fy[i]);
+  __m256 zero = _mm256_setzero_ps();
+  for(int i=0; i<N; i+=8) {
+    __m256 xi = _mm256_load_ps(x+i);
+    __m256 yi = _mm256_load_ps(y+i);
+    __m256 fxi = zero;
+    __m256 fyi = zero;
+    for(int j=0; j<N; j++) {
+      __m256 dx = _mm256_set1_ps(x[j]);
+      __m256 dy = _mm256_set1_ps(y[j]);
+      __m256 mj = _mm256_set1_ps(m[j]);
+      __m256 r2 = zero;
+      dx = _mm256_sub_ps(xi, dx);
+      dy = _mm256_sub_ps(yi, dy);
+      r2 = _mm256_fmadd_ps(dx, dx, r2);
+      r2 = _mm256_fmadd_ps(dy, dy, r2);
+      __m256 mask = _mm256_cmp_ps(r2, zero, _CMP_GT_OQ);
+      __m256 invR = _mm256_rsqrt_ps(r2);
+      invR = _mm256_blendv_ps(zero, invR, mask);
+      mj = _mm256_mul_ps(mj, invR);
+      invR = _mm256_mul_ps(invR, invR);
+      mj = _mm256_mul_ps(mj, invR);
+      fxi = _mm256_fmadd_ps(dx, mj, fxi);
+      fyi = _mm256_fmadd_ps(dy, mj, fyi);
+    }
+    _mm256_store_ps(fx+i, fxi);
+    _mm256_store_ps(fy+i, fyi);
   }
+  for(int i=0; i<N; i++)
+    printf("%d %g %g\n",i,fx[i],fy[i]);
 }
