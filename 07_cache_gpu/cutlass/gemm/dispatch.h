@@ -8,18 +8,18 @@
 namespace cutlass {
 namespace gemm {
 
-  template <typename T>
+  template <typename epilogue_op_t>
   __global__ void kernel(
                        int m,                      ///< Height in rows of op(A) and C
                        int n,                      ///< Width in columns of op(B) and C
                        int k,                      ///< Width in columns of op(A) and height in rows of op(B)
                        k_split_control k_split,    ///< Abstraction for controlling inter-block k-splitting
-                       T op,           ///< Epilogue operation to update matrix C
+                       epilogue_op_t op,           ///< Epilogue operation to update matrix C
                        float *d_a,               ///< Pointer to matrix A array values
                        float *d_b,               ///< Pointer to matrix B array values
                        float *d_c)               ///< Pointer to matrix C array values
 {
-  typedef block_task<float, float, T, 4> block_task_t;
+  typedef block_task<float, float, epilogue_op_t, 4> block_task_t;
 
     // Declare statically-allocated shared storage
     __shared__ typename block_task_t::scratch_storage_t smem;
