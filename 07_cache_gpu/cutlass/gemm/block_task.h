@@ -46,12 +46,9 @@ namespace gemm {
 
 template <
     typename                    value_t,                ///< Multiplicand value type (matrices A and B)
-    typename                    accum_t,                ///< Accumulator value type (matrix C and scalars)
-    int                         LdgAlignA,              ///< Alignment (in bytes) for A operand
-    int                         LdgAlignB,              ///< Alignment (in bytes) for B operand
+    typename                    accum_t,                ///< Accumulator value type (matrix C and scalars)d
     typename                    epilogue_op_t,          ///< Epilogue operation applied to GEMM
-    int                         LdgAlignC,              ///< Alignment (in bytes) for C operand
-    bool                        AllowRaggedTiles        ///< Whether the input matrix's dimensions need not be an even-multiple of the block-wide tile dimensions
+    int                         LdgAlignC              ///< Alignment (in bytes) for C operand
 >
 struct block_task
 {
