@@ -4,8 +4,28 @@
 #include <vector>
 #include <chrono>
 #include <immintrin.h>
+#include "timers.h"
+
 using namespace std;
 typedef vector<vector<float>> matrix;
+
+void init_block(float *Ac, int mc, int nc) {
+  for (int i=0; i<mc; i++)
+    for (int j=0; j<nc; j++)
+      Ac[i*nc+j] = 0;
+}
+
+void load_block(float *Ac, const matrix &A, int mc, int nc, int ic, int jc) {
+  for (int i=0; i<mc; i++)
+    for (int j=0; j<nc; j++)
+      Ac[i*nc+j] = A[i+ic][j+jc];
+}
+
+void store_block(float *Ac, matrix &A, int mc, int nc, int ic, int jc) {
+  for (int i=0; i<mc; i++)
+    for (int j=0; j<nc; j++)
+      A[i+ic][j+jc] += Ac[i*nc+j];
+}
 
 void matmult(matrix &A, matrix &B, matrix &C, int N) {
   const int m = N, n = N, k = N;
@@ -14,25 +34,16 @@ void matmult(matrix &A, matrix &B, matrix &C, int N) {
   const int mc = 256;
   const int nr = 64;
   const int mr = 32;
-#pragma omp parallel for collapse(2)
+  float Cc[mc*nc];
+#pragma omp parallel for collapse(2) private(Cc)
   for (int jc=0; jc<n; jc+=nc) {
     for (int pc=0; pc<k; pc+=kc) {
       float Bc[kc*nc];
-      for (int p=0; p<kc; p++) {
-        for (int j=0; j<nc; j++) {
-          Bc[p*nc+j] = B[p+pc][j+jc];
-        }
-      }
+      load_block(Bc,B,kc,nc,pc,jc);
       for (int ic=0; ic<m; ic+=mc) {
-	float Ac[mc*kc],Cc[mc*nc];
-        for (int i=0; i<mc; i++) {
-          for (int p=0; p<kc; p++) {
-            Ac[i*kc+p] = A[i+ic][p+pc];
-          }
-          for (int j=0; j<nc; j++) {
-            Cc[i*nc+j] = 0;
-          }
-        }
+	float Ac[mc*kc];
+	load_block(Ac,A,mc,kc,ic,pc);
+	init_block(Cc,mc,nc);
         for (int jr=0; jr<nc; jr+=nr) {
           for (int ir=0; ir<mc; ir+=mr) {
             for (int kr=0; kr<kc; kr++) {
@@ -43,16 +54,12 @@ void matmult(matrix &A, matrix &B, matrix &C, int N) {
                   __m256 Cvec = _mm256_load_ps(Cc+i*nc+j);
                   Cvec = _mm256_fmadd_ps(Avec, Bvec, Cvec);
                   _mm256_store_ps(Cc+i*nc+j, Cvec);
-                }
+		}
               }
             }
           }
         }
-        for (int i=0; i<mc; i++) {
-          for (int j=0; j<nc; j++) {
-            C[i+ic][j+jc] += Cc[i*nc+j];
-          }
-        }
+	store_block(Cc,C,mc,nc,ic,jc);
       }
     }
   }
@@ -71,10 +78,10 @@ int main(int argc, char **argv) {
       C[i][j] = 0;
     }
   }
-  auto tic = chrono::steady_clock::now();
+  startTimer();
   matmult(A,B,C,N);
-  auto toc = chrono::steady_clock::now();
-  double time = chrono::duration<double>(toc - tic).count();
+  stopTimer();
+  double time = getTime();
   printf("N=%d: %lf s (%lf GFlops)\n",N,time,2.*N*N*N/time/1e9);
 #pragma omp parallel for
   for (int i=0; i<N; i++)
