@@ -6,10 +6,10 @@
 
 #include "timer.h"
 
-template <class T>
+template <typename T>
 using Mat = std::vector<std::vector<T>>;
 
-template <class T>
+template <typename T>
 using Vec = std::vector<T>;
 
 template<typename T>
@@ -20,8 +20,8 @@ void save_matrix(const std::string& file_name, const Mat<float>& mat, int nx, in
     std::cerr << "Cannot open file" << std::endl;
   }
 
-  for (int i = 0; i != nx; i++) {
-    for (int j = 0; j != ny; j++) {
+  for (auto i = 0; i != nx; i++) {
+    for (auto j = 0; j != ny; j++) {
       ofs << mat[i][j] << " ";
     }
     ofs << std::endl;
@@ -32,8 +32,8 @@ template <typename T>
 Mat<T> buildup_b(const Mat<T>& b, T rho, T dt, const Mat<T>& u, const Mat<T>& v, T dx, T dy, int nx, int ny) {
   auto bn = Mat<T>(b);
 
-  for (int i = 1; i != nx - 1; i++) {
-    for (int j = 1; j != ny - 1; j++) {
+  for (auto i = 1; i != nx - 1; i++) {
+    for (auto j = 1; j != ny - 1; j++) {
       bn[i][j] = (
         rho * (
           1/dt * ((u[i+1][j] - u[i-1][j]) / (2 * dx) + (v[i][j+1] - v[i][j-1]) / (2 * dy))
@@ -52,9 +52,9 @@ template<typename T>
 Mat<T> pressure_poisson(const Mat<T>& p, T dx, T dy, const Mat<T>& b, int nit, int nx, int ny) {
   auto pn = Mat<T>(p);
 
-  for (int it = 0; it != nit; it++) {
-    for (int i = 1; i != nx - 1; i++) {
-      for (int j = 1; j != ny - 1; j++) {
+  for (auto it = 0; it != nit; it++) {
+    for (auto i = 1; i != nx - 1; i++) {
+      for (auto j = 1; j != ny - 1; j++) {
         pn[i][j] = (
           ((pn[i+1][j] + pn[i-1][j]) * dy*dy + (pn[i][j+1] + pn[i][j-1]) * dx*dx) / (2*(dx*dx + dy*dy))
           - (dx*dx * dy*dy) / (2*(dx*dx + dy*dy)) * b[i][j]
@@ -62,12 +62,12 @@ Mat<T> pressure_poisson(const Mat<T>& p, T dx, T dy, const Mat<T>& b, int nit, i
       }
     }
 
-    for (int i = 0; i != nx; i++) {
+    for (auto i = 0; i != nx; i++) {
       pn[i][0] = pn[i][1];
       pn[i][ny-1] = 0;
     }
 
-    for (int j = 0; j != ny; j++) {
+    for (auto j = 0; j != ny; j++) {
       pn[0][j] = pn[1][j];
       pn[nx-1][j] = pn[nx-2][j];
     }
@@ -92,15 +92,15 @@ int main(int argc, char *argv[]) {
   {
     Timer<std::chrono::milliseconds> T(&time);
 
-    for (int t = 0; t != nt; t++) {
+    for (auto t = 0; t != nt; t++) {
       auto un = Mat<float>(u);
       auto vn = Mat<float>(v);
 
       b = buildup_b<float>(b, rho, dt, u, v, dx, dy, nx, ny);
       p = pressure_poisson<float>(p, dx, dy, b, nit, nx, ny);
 
-      for (int i = 1; i != nx - 1; i++) {
-        for (int j = 1; j != ny - 1; j++) {
+      for (auto i = 1; i != nx - 1; i++) {
+        for (auto j = 1; j != ny - 1; j++) {
           u[i][j] = (
             un[i][j] - un[i][j] * dt/dx * (un[i][j] - un[i-1][j]) - vn[i][j] * dt/dy * (un[i][j] - un[i][j-1])
             - dt / (rho * 2 * dx) * (p[i+1][j] - p[i-1][j])
@@ -115,14 +115,14 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      for (int i = 0; i != nx; i++) {
+      for (auto i = 0; i != nx; i++) {
         u[i][0] = 0;
         u[i][ny-1] = 1;
         v[i][0] = 0;
         v[i][ny-1] = 0;
       }
 
-      for (int j = 0; j != ny; j++) {
+      for (auto j = 0; j != ny; j++) {
         u[0][j] = 0;
         u[nx-1][j] = 0;
         v[0][j] = 0;
