@@ -19,12 +19,18 @@ void save_matrix(const std::string& file_name, const Mat<float>& mat, int nx, in
   auto file = H5Fcreate(file_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
   hsize_t dim[2] = {nx, ny};
+  hsize_t localdim[2] = {1, ny};
 
   auto dataspace = H5Screate_simple(2, dim, NULL);
+  auto localspase = H5Screate_simple(2, localdim, NULL);
 
   auto dataset = H5Dcreate(file, "dataset", H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-  H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &mat[0][0]);
+  for (int i = 0; i != nx; i++) {
+    hsize_t offset[2] = {i, 0};
+    H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, NULL, localdim, NULL);
+    H5Dwrite(dataset, H5T_NATIVE_FLOAT, localspase, dataspace, H5P_DEFAULT, mat[i].data());
+  }
 }
 
 template <typename T>
