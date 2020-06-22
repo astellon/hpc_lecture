@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "hdf5.h"
+
 #include "timer.h"
 
 template <typename T>
@@ -14,18 +16,15 @@ using Vec = std::vector<T>;
 
 template<typename T>
 void save_matrix(const std::string& file_name, const Mat<float>& mat, int nx, int ny) {
-  auto ofs = std::basic_ofstream<char>(file_name);
+  auto file = H5Fcreate(file_name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
-  if (!ofs) {
-    std::cerr << "Cannot open file" << std::endl;
-  }
+  hsize_t dim[2] = {nx, ny};
 
-  for (auto i = 0; i != nx; i++) {
-    for (auto j = 0; j != ny; j++) {
-      ofs << mat[i][j] << " ";
-    }
-    ofs << std::endl;
-  }
+  auto dataspace = H5Screate_simple(2, dim, NULL);
+
+  auto dataset = H5Dcreate(file, "dataset", H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+  H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &mat[0][0]);
 }
 
 template <typename T>
@@ -133,9 +132,9 @@ int main(int argc, char *argv[]) {
 
   std::cout << "took: " << time  << "ms" << std::endl;
 
-  save_matrix<float>("u.txt", u, nx, ny);
-  save_matrix<float>("v.txt", v, nx, ny);
-  save_matrix<float>("p.txt", p, nx, ny);
+  save_matrix<float>("u.h5", u, nx, ny);
+  save_matrix<float>("v.h5", v, nx, ny);
+  save_matrix<float>("p.h5", p, nx, ny);
 
   return 0;
 }
