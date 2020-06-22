@@ -1,15 +1,13 @@
-using Plots
-
-gr()
+using HDF5, Plots
 
 function loadmat(path::AbstractString)
   raw = read(path, String)
   mat = parse.(Float64, hcat(split.(split(raw, "\n", keepempty=false), " ", keepempty=false)...))
 end
 
-u = loadmat("u.txt")
-v = loadmat("v.txt")
-p = loadmat("p.txt")
+u = h5read("u.h5", "dataset")
+v = h5read("v.h5", "dataset")
+p = h5read("p.h5", "dataset")
 
 NX = size(u, 1)
 NY = size(u, 2)
