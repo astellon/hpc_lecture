@@ -1,10 +1,5 @@
 using HDF5, Plots
 
-function loadmat(path::AbstractString)
-  raw = read(path, String)
-  mat = parse.(Float64, hcat(split.(split(raw, "\n", keepempty=false), " ", keepempty=false)...))
-end
-
 u = h5read("u.h5", "dataset")
 v = h5read("v.h5", "dataset")
 p = h5read("p.h5", "dataset")
